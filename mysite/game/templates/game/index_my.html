@@ -1,0 +1,61 @@
+{% extends 'game/base.html' %}
+{% block title %}Strona główna{% endblock %}
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+{% block content %}
+<div class="container mt-5">
+    <h2>Kółko i krzyżyk online</h2>
+    <hr style="border: 5px solid #006cd8!important">
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="create_room" class="btn btn-primary btn-lg">Stwórz nową rozgrywkę</button>
+    </form>
+    <hr style="border: 3px solid #006cd8!important">
+    <legend>lub dołącz do istniejącej:</legend>   
+    <table id="data" style="width: 100%;" class="table table-striped">
+        <thead>
+            <tr>
+                <th class="col-2">Pokój</th>
+                <th class="col-3">Gracz 1</th>
+                <th class="col-3">Gracz 2</th>
+                <th class="col-2 text-right">Dołącz</th>
+                <th class="col-2 text-right">Usuń</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gr in game_room %}
+            <tr>
+                <td>Pokój {{ gr.id }}</td>
+                <td>{% if not gr.gamer1 %} -- {%else%} X: {{ gr.gamer1 }}{%endif%}</td>
+                <td>{% if not gr.gamer2 %} -- {%else%} O: {{ gr.gamer2 }}{%endif%}</td>
+                
+                {% if not gr.gamer1 or not gr.gamer2 or gr.gamer1 == user or gr.gamer2 == user %}
+                <td class="text-right">
+                    <form method="post" action="{% url 'index' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="game_id" value="{{ gr.game_id }}">
+                        <button type="submit" name="join_room" class="btn btn-primary">Dołącz</button>
+                    </form>
+
+                </td>
+                {%else%}
+                <td class="text-right">Pokój pełny</td>
+                {% endif %}
+                <td class="text-right">
+                    <form method="post" action="{% url 'index_my_view' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="game_id" value="{{ gr.game_id }}">
+                        <button type="submit" name="delete_room" class="btn btn-danger">Usuń</button>
+                    </form>
+
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+{% endblock %}

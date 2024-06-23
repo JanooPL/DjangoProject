@@ -1,0 +1,202 @@
+{% extends 'game/base.html' %}
+{% load game_extras %}
+
+{% block title %}Rozgrywka{% endblock %}
+
+{% block content %}
+<style>
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-gap: 5px;
+        margin: 20px auto;
+        width: max-content;
+    }
+    .cell {
+        width: 100px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        border: 1px solid #333;
+        
+        cursor: pointer;
+    }
+    .cell-x {
+        border-radius: 5px;
+        background-color: lightblue;
+        cursor: none;
+    }
+    .cell-o {
+        border-radius: 5px;
+        background-color: lightcoral;
+        cursor: none;
+    }
+    .cell-none  {
+        border-radius: 5px;
+        background-color: rgb(121, 121, 121);
+        cursor: none;
+    }
+    .cell-stop  {
+        border-radius: 5px;
+        cursor: none;
+    }
+
+    .player {
+        font-size: xx-large;
+        font-weight: bold;
+        margin-top: 5vh;
+    }
+</style>
+
+<h1>Cześć <span class="{% if user.username == game.gamer1.username %}text-primary{%else%}text-danger{% endif %}">{{ user.username }}!</span>
+    Grasz 
+    <span class="{% if user.username == game.gamer1.username %}text-primary{%else%}text-danger{% endif %}">
+        {% if user.username == game.gamer1.username %}X{%else%}O{% endif %}</span>!</h1>
+
+{% if game.gamer1 and game.gamer2 %}
+<div class="container mt-3">
+    <div class="row g-2">
+      <div class="col">
+        <div class="player text-right {% if game.current_turn == 'X' and not game.winner %}text-primary{% endif %}">
+            <span class="text-primary">X</span>: {{ game.gamer1 }}
+
+            
+        </div>
+        {% if game.gamer1 == user %}
+        <span class="text-right">
+            <form method="post" action="{% url 'out_view' game_id=game.game_id %}">
+                {% csrf_token %}
+                <button class="btn btn-warning" type="submit" name="out">Wyjdź</button>
+            </form>
+        </span>
+        {%endif%}
+      </div>
+      <div class="col">
+        <div class="board">
+        {% if game.gamer1.username == user.username and game.current_turn == "X" %}
+        
+            {% for i in 9|range_filter %}
+                {% if board|index:i == " " and not game.winner %}
+                    <form method="post" action="{% url 'game_view' game_id=game.game_id %}">
+                        {% csrf_token %}
+                        <input hidden name="position" value="{{ i }}"></input>
+                        <button class="cell btn btn-light" type="submit" name="move"></button>
+                    </form>
+                {% else %}
+                    {% if board|index:i == "X" %}
+                        <div class="cell cell-x">{{ board|index:i }}</div>
+                    {% elif board|index:i == "O" %}
+                        <div class="cell cell-o">{{ board|index:i }}</div>
+                    {% else %}
+                        <div class="cell cell-none">{{ board|index:i }}</div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% elif game.gamer2.username == user.username and game.current_turn == "O" %}
+            {% for i in 9|range_filter %}
+                {% if board|index:i == " " and not game.winner %}
+                    <form method="post" action="{% url 'game_view' game_id=game.game_id %}">
+                        {% csrf_token %}
+                        <input hidden name="position" value="{{ i }}"></input>
+                        <button class="cell btn btn-light" type="submit" name="move"></button>
+                    </form>
+                {% else %}
+                    {% if board|index:i == "X" %}
+                        <div class="cell cell-x">{{ board|index:i }}</div>
+                    {% elif board|index:i == "O" %}
+                        <div class="cell cell-o">{{ board|index:i }}</div>
+                    {% else %}
+                        <div class="cell cell-none">{{ board|index:i }}</div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+
+        {% for i in 9|range_filter %}
+                {% if board|index:i == " " and not game.winner %}
+
+                    <div class="cell cell-stop"></div> 
+                {% else %}
+                    {% if board|index:i == "X" %}
+                        <div class="cell cell-x">{{ board|index:i }}</div>
+                    {% elif board|index:i == "O" %}
+                        <div class="cell cell-o">{{ board|index:i }}</div>
+                    {% else %}
+                        <div class="cell cell-none">{{ board|index:i }}</div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+
+        {%endif%}
+        </div>
+            {% if not game.winner %}
+            <div class="player text-center">
+                Kolej <span class="{% if game.current_turn == 'X'%}text-primary{%else%}text-danger{% endif %}">
+                    {% if game.current_turn == 'X'%}{{ game.gamer1 }}{%else%}{{ game.gamer2 }}{% endif %} {{ game.current_turn }}</span>
+            </div>
+            
+        {% endif %}
+        {% if game.winner %} 
+        <h2>
+            {% if game.winner == "D" %}
+                Remis!
+            {% else %}
+            Gracz <span class="{% if game.winner == game.gamer1.username and game.current_turn == 'O' %}text-primary{%else%}text-danger{% endif %}">{{ game.winner }}</span> wygrywa!
+            {% endif %}
+        </h2>
+        <form method="post" action="{% url 'reset_view' game_id=game.game_id %}">
+            {% csrf_token %}
+            <button class="btn btn-primary" type="submit" name="reset">Reset</button>
+        </form>
+    {% endif %}
+      </div>
+      <div class="col">
+        <div class="player {% if game.current_turn == 'O' and not game.winner %}text-danger{% endif %}">
+            <span class="text-danger">O</span>: {{ game.gamer2 }}
+        </div>
+        {% if game.gamer2 == user %}
+            <span class="text-left">
+                <form method="post" action="{% url 'out_view' game_id=game.game_id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-warning" type="submit" name="out">Wyjdź</button>
+                </form>
+            </span>
+            {%endif%}
+      </div>
+    </div>
+</div>
+         
+{% else %}
+
+    <button class="btn btn-primary" type="button" disabled>
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span class="visually-hidden fs-1">Oczekiwanie na przeciwnika...</span>
+    </button>
+    <hr>
+    <span class="text-left">
+        <form method="post" action="{% url 'out_view' game_id=game.game_id %}">
+            {% csrf_token %}
+            <button class="btn btn-warning" type="submit" name="out">Wyjdź</button>
+        </form>
+    </span>
+{% endif %}
+
+<script>
+    function checkForChanges() {
+        fetch(`/check_game_changes/{{game.game_id}}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.changes) {
+                location.reload(); // Przeładuj stronę, gdy są zmiany
+            }
+        });
+    }
+    
+    // Sprawdź co 5 sekund
+    setInterval(checkForChanges, 2000);
+    </script>
+    
+
+{% endblock %}
